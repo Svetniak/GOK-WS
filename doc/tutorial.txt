@@ -1,0 +1,123 @@
+#   ________  ___      ___ _______  _________  ________   ___  ________  ___  __       
+#  |\   ____\|\  \    /  /|\  ___ \|\___   ___|\   ___  \|\  \|\   __  \|\  \|\  \     
+#  \ \  \___|\ \  \  /  / \ \   __/\|___ \  \_\ \  \\ \  \ \  \ \  \|\  \ \  \/  /|_   
+#   \ \_____  \ \  \/  / / \ \  \_|/__  \ \  \ \ \  \\ \  \ \  \ \   __  \ \   ___  \  
+#    \|____|\  \ \    / /   \ \  \_|\ \  \ \  \ \ \  \\ \  \ \  \ \  \ \  \ \  \\ \  \ 
+#      ____\_\  \ \__/ /     \ \_______\  \ \__\ \ \__\\ \__\ \__\ \__\ \__\ \__\\ \__\
+#     |\_________\|__|/       \|_______|   \|__|  \|__| \|__|\|__|\|__|\|__|\|__| \|__|
+#     \|_________|                                                                     
+#  ====================================================================================
+
+# |-----------------------------------------------------------------------------------|
+# |                                  _                                                | 
+# |                                 /_\  _ __ _ __                                    | 
+# |                                / _ \| '_ \ '_ \                                   | 
+# |                               /_/ \_\ .__/ .__/                                   | 
+# |                                     |_|  |_|                                      | 
+# |-----------------------------------------------------------------------------------|
+
+Ene este documento se detallas las instrucciones o mas bien los pasos tomados por este
+novato, para llevar a cabo la creacion de una aplicacion en flask para la creacion 
+despliegue y manejo de un blog.
+
+===========================|    CONFIGURACION DE APP    |===================================
+1. Crear un directorio para contener el codigo de la aplicacion.
+  $ mkdir .../goq
+
+2.Crear un ambiente virtual para aislar la aplicacion.
+  python3 -m venv venv
+  * el ultimo parametro es el nombre que se le asigna al ambiente.
+
+3.Activar las en ambiente virtual.
+  $ . venv/bin/activate
+  * el primer parametro despues del punto, refiere al nombre que se le asigno al ambiente.
+  * para desactivar el ambiente virtual: $ deactivate
+
+4.Instalar las herramientas que se van a utilizar:
+  $ pip install flask werkzeug mariadb
+  *para revisar las instalaciones: $ pip freeze
+
+Una aplicacion flask es 9en si misma una instancia de la clase 'Flask', todo lo relacionado con esta aplicacion, como las direcciones URL y configuraciones seran registradas con esta clase.
+
+===========================|    FABRICA DE APPLICACIONES    |===================================
+Es hora de codigo:
+Comenzaremos por crear la instacia de Flask en una funcion, esta es conocida como fabrica de applicaciones, y todas las configuraciones, registros y otras cciones ocurriran dentro de esta.
+
+5.Crea un nuevo folder para contener el codigo como un modulo
+6.crear archivo __init__.py dentro de la nueva carpeta para iniciar el codigo.
+  $ touch __init__.py
+
+  este archvo tiene doble proposito, este va a contener la 'fabrica de aplicaciones' y le dice a python que el directorio es un paquete.
+Toda la aplicacion podria ser contenida en este archivo, sinembargo, conforme las aplicaciones se hacen mas complejas, tambien lo es tener contol sobre esta, es por eso que se Python usa paquetes para organizar el codigo, estos pueden ser importados para su utilizacion.
+
+El proyecto se estructura de una manera parecida a esto:
+
+/home/user/Projects/GOQ-WS
+├── goq/
+│   ├── __init__.py
+│   ├── db.py
+│   ├── schema.sql
+│   ├── auth.py
+│   ├── blog.py
+│   ├── templates/
+│   │   ├── base.html
+│   │   ├── auth/
+│   │   │   ├── login.html
+│   │   │   └── register.html
+│   │   └── blog/
+│   │       ├── create.html
+│   │       ├── index.html
+│   │       └── update.html
+│   ├──── static/
+│   │     └── style.css
+│   └── doc/
+│       ├── readme.txt
+│       └── tutorial.txt 
+├── tests/
+│   ├── conftest.py
+│   ├── data.sql
+│   ├── test_factory.py
+│   ├── test_db.py
+│   ├── test_auth.py
+│   └── test_blog.py
+├── venv/
+├── setup.py
+└── MANIFEST.in
+
+Tambien es de suma importancia mantener los datos a salvo en un sistema de control de version como git, para ser respaldados.
+
+Esta aplicacion utilizara mariadb como base de datos SQL para guardar los articulos, a pesar de que Python contiene SQLite, y no requere mayor configuracion, una base de datos mas comercial como lo es MariaDB, Me parece de mayor utilidad ya que su lenguaje y sintaxis son de uso mas conocido.
+
+===========================|    CONECCION CON BASE DE DATOS    |===================================
+Lo primero a realizar al trabajar con bases de datos, al igual que con las librerias de Python, es realizar una coneccion con ella. Todas las peticiones y operaciones son llevadas a cabo a travez de esta, y cerrada al terminar la tarea.
+En aplicaciones web es estas conecciones son comunmente ligadas a las peticiones. Son creadas en algun momento al manejar peticiones, y cerradas antes de que la respuesta sea enviada.
+
+Del manejo de las peticiones, operaciones y cerrar la coneccion, en general de control de la base de datosse hara cargo el archivo 'db.py'
+
+En este se encontrara:
+g --> es un ojeto especial que es unico para cada peticion. Es utilizado para guardar datos que puede ser utilizada por diversas funciones durante la peticion. la coneccion es guardada y reutilizada cuando es necesario, en lugar de hacer una nueva coneccion cada vez que get_db es llamada.
+
+current_app --> es otro objeto especial que apunta a la aplicacion Flask que maneja las peticiones. Como hemos utilizado una fabrica de aplicaciones, no hay un objeto de aplicacion al escribit el resto del codigo. 'get_db' seta llamada cuando la aplicacion es creada y maneja una peticion, asi que 'current_app' puede ser utilizada.
+
+mariadb.connect --> Establece una coneccion con el archivo senalado por la llave de configuracion de la base de datos.
+
+dictionary=True --> Le dice a la coneccion que retorne los datos en un diccionario. Esto nos permite accesar a las columnas por nombre.
+
+@click.command --> Define un comando que puede ser utilizado en la terminal que llama a la funcion 'init_db' y muestra un mensaje de exito al usuario.
+
+close_db --> Revisa si una coneccion fue creada checando si 'g.db' contiene un valor. Si la coneccion existe, esta es cerrada
+
+Una vez que la coneccion esta lista en 'db.py', hay que programar las operaciones de la base de datos, para esto creamos el archivo 'schema.py'
+
+las funciones close_db y init_db_command deben set registradas en la instancia de la aplicacion, ya que de otra forma no podran ser utilizadas. Como estamos utilizando la fabrica de aplicaciones, La instancia no esta disponible cuando se escriben las funciones. En su lugar crearemos una funcion que tome una aplicacion y haga el registro. (def init_app(app))
+
+===========================|    Blueprint y Views    |===================================
+
+Una funcion view in el codigo que escribimos para responder a una peticion a la aplicacion. Flask utiliza patrones para empatar las URL de las peticiones con las vistas que deben manejarlas. La view retorna informacion que Flask convierte en informacion de respuesta. Flask tambien puede hacer lo opuesto y generar URLs para las views basado en su nombre y argumentos.
+
+----Crear un Blueprint:
+Un Blueprint es una forma de organizar un grupo de vistas y otros codigos. En lugar de registrar vistas y codigos directamente con la aplicacion, son directamente insertadas en un Blueprint. Luego los Blueprints son registrados con la aplicacion se hacen disponibles en la funcion de fabrica.
+
+GOQ tendra entre sus Blueprints uno para la autenticacion y otro para la funcion de publicacion de articulos. El codigo para cada Blueprint estara en modulos separados.
+
+
